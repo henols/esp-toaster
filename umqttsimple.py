@@ -1,3 +1,5 @@
+import time
+
 try:
     import usocket as socket
 except:
@@ -29,7 +31,10 @@ class MQTTClient:
         self.lw_msg = None
         self.lw_qos = 0
         self.lw_retain = False
-
+        self.last_msg_in = time.time()
+        self.last_msg_out = time.time()
+        self.ping_t = 0
+        
     def _send_str(self, s):
         self.sock.write(struct.pack("!H", len(s)))
         self.sock.write(s)
@@ -100,6 +105,9 @@ class MQTTClient:
         assert resp[0] == 0x20 and resp[1] == 0x02
         if resp[3] != 0:
             raise MQTTException(resp[3])
+        self.last_msg_in = time.time()
+        self.last_msg_out = time.time()
+        self.ping_t = 0
         return resp[2] & 1
 
     def disconnect(self):
@@ -108,6 +116,8 @@ class MQTTClient:
 
     def ping(self):
         self.sock.write(b"\xc0\0")
+        self.ping_t = time.time()
+        self.last_msg_out = time.time()
 
     def publish(self, topic, msg, retain=False, qos=0):
         pkt = bytearray(b"\x30\0\0\0")
@@ -131,6 +141,7 @@ class MQTTClient:
             struct.pack_into("!H", pkt, 0, pid)
             self.sock.write(pkt, 2)
         self.sock.write(msg)
+        self.last_msg_out = time.time()
         if qos == 1:
             while 1:
                 op = self.wait_msg()
@@ -153,6 +164,7 @@ class MQTTClient:
         self.sock.write(pkt)
         self._send_str(topic)
         self.sock.write(qos.to_bytes(1, "little"))
+        self.last_msg_out = time.time()
         while 1:
             op = self.wait_msg()
             if op == 0x90:
@@ -168,15 +180,58 @@ class MQTTClient:
     # set by .set_callback() method. Other (internal) MQTT
     # messages processed internally.
     def wait_msg(self):
+        if self.keepalive > 0:
+            
+        # check ping time
+            now = time.time()
+
+            if (now - self.last_msg_out >= self.keepalive or now - self.last_msg_in >= self.keepalive):
+                if self.ping_t == 0:
+                    # PINGREQ = 0xC0
+                    self.ping()
+                    self.last_msg_out = now
+                    self.last_msg_in = now
+                else:
+                    self._sock_close()
+
+                    if self._state == mqtt_cs_disconnecting:
+                        rc = MQTT_ERR_SUCCESS
+                    else:
+                        rc = 1
+
+                    self._do_on_disconnect(rc)
+
+        if self.ping_t > 0 and now - self.ping_t >= self.keepalive:
+            # client->ping_t != 0 means we are waiting for a pingresp.
+            # This hasn't happened in the keepalive time so we should disconnect.
+            self._sock_close()
+
+            if self._state == mqtt_cs_disconnecting:
+                rc = MQTT_ERR_SUCCESS
+            else:
+                rc = 1
+
+            self._do_on_disconnect(rc)
+
+            return MQTT_ERR_CONN_LOST
+
+        
+        
+        
+        
         res = self.sock.read(1)
         self.sock.setblocking(True)
         if res is None:
             return None
         if res == b"":
             raise OSError(-1)
+        
+        self.last_msg_in = time.time()
+        
         if res == b"\xd0":  # PINGRESP
             sz = self.sock.read(1)[0]
             assert sz == 0
+            self.ping_t = 0
             return None
         op = res[0]
         if op & 0xf0 != 0x30:

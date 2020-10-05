@@ -1,0 +1,6 @@
+{
+  "ssid": "network-name",
+  "password": "network-password",
+  "mqtt-server":"mqtt-server",
+  "mqtt-port":1883
+}
