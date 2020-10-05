@@ -33,8 +33,7 @@ class MQTTClient:
         self.lw_msg = None
         self.lw_qos = 0
         self.lw_retain = False
-        self.last_msg_in = time.time()
-        self.last_msg_out = time.time()
+        self.last_msg = time.time()
         self.socket_open = False
         self.ping_t = 0
         
@@ -109,8 +108,7 @@ class MQTTClient:
         assert resp[0] == 0x20 and resp[1] == 0x02
         if resp[3] != 0:
             raise MQTTException(resp[3])
-        self.last_msg_in = time.time()
-        self.last_msg_out = time.time()
+        self.last_msg = time.time()
         self.ping_t = 0
         return resp[2] & 1
 
@@ -121,9 +119,10 @@ class MQTTClient:
             self.socket_open = False
 
     def ping(self):
+#         print('PINGREQ')
         self.sock.write(b"\xc0\0")
         self.ping_t = time.time()
-        self.last_msg_out = time.time()
+        self.last_msg = time.time()
 
     def publish(self, topic, msg, retain=False, qos=0):
         pkt = bytearray(b"\x30\0\0\0")
@@ -147,7 +146,7 @@ class MQTTClient:
             struct.pack_into("!H", pkt, 0, pid)
             self.sock.write(pkt, 2)
         self.sock.write(msg)
-        self.last_msg_out = time.time()
+        self.last_msg = time.time()
         if qos == 1:
             while 1:
                 op = self.wait_msg()
@@ -170,7 +169,7 @@ class MQTTClient:
         self.sock.write(pkt)
         self._send_str(topic)
         self.sock.write(qos.to_bytes(1, "little"))
-        self.last_msg_out = time.time()
+        self.last_msg = time.time()
         while 1:
             op = self.wait_msg()
             if op == 0x90:
@@ -191,27 +190,27 @@ class MQTTClient:
             # check ping time
             now = time.time()
     
-            if (now - self.last_msg_out >= self.keepalive or now - self.last_msg_in >= self.keepalive):
+            if (now - self.last_msg >= self.keepalive):
                 if self.ping_t == 0:
                     # PINGREQ = 0xC0
                     self.ping()
-                    self.last_msg_out = now
-                    self.last_msg_in = now
                 else:
+#                    print("Closing socket, no self ping ")
                     self.sock.close()
                     if self.socket_open :
-                        self.socket_open = False
                         raise OSError(-1)
                     else:
-                        self.socket_open = False
                         return None
                     
             if self.ping_t > 0 and now - self.ping_t >= self.keepalive:
                 # client->ping_t != 0 means we are waiting for a pingresp.
                 # This hasn't happened in the keepalive time so we should disconnect.
+#                 print("Closing socket, self ping, PINGRESP timeout ")
                 self.sock.close()
-                self.socket_open = False
-                raise OSError(-1)
+                if self.socket_open :
+                    raise OSError(-1)
+                else:
+                    return None
         
         res = self.sock.read(1)
         self.sock.setblocking(True)
@@ -220,12 +219,13 @@ class MQTTClient:
         if res == b"":
             raise OSError(-1)
         
-        self.last_msg_in = time.time()
+        self.last_msg = time.time()
         
         if res == b"\xd0":  # PINGRESP
             sz = self.sock.read(1)[0]
             assert sz == 0
             self.ping_t = 0
+#             print('PINGRESP')
             return None
         op = res[0]
         if op & 0xf0 != 0x30:

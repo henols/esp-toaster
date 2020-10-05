@@ -5,7 +5,7 @@ from machine import RTC
 def connect_and_subscribe():
   global client_id, config, topic_sub
   print('Tryng to connect')
-  client = MQTTClient(client_id, config["mqtt-server"], port = config["mqtt-port"],keepalive = 0)
+  client = MQTTClient(client_id, config["mqtt-server"], port = config["mqtt-port"],keepalive = 10)
   power = {}
   power['state'] = 'off'
   client.set_last_will(power_topic,json.dumps(power), retain=True)
