@@ -7,14 +7,13 @@ expected_toasting_time = 120
 
 def connect_and_subscribe():
   global client_id, config, topic_sub
-  print('Tryng to connect')
   client = MQTTClient(client_id, config["mqtt-server"], port=config["mqtt-port"], keepalive=10)
   power = {}
   power['state'] = 'off'
   client.set_last_will(power_topic, json.dumps(power), retain=True)
   client.connect()
 #  client.subscribe(topic_sub)
-  print('Connected to %s MQTT broker' % (config["mqtt-server"]))
+  print('Connected to {} MQTT broker'.format(config["mqtt-server"]))
   return client
 
 
@@ -33,9 +32,8 @@ def post_toasting_message(state):
   toast['state'] = 'toasting' if state else 'ejected'
   toast['duration'] = '{:02.0f}:{:02.0f}'.format(duration / 60, duration % 60)
   toast['progress'] = duration / expected_toasting_time * 100
-  print('Toasting message: %s', toast)
+  print('Toaster message: {}'.format(toast))
   client.publish(toasting_topic, json.dumps(toast))
-
 
 def pin_cb(value):
 #   print('Pin state %s' % value)
@@ -65,6 +63,7 @@ try:
   client = connect_and_subscribe()
   power = {}
   power['state'] = 'on'
+  print('Toaster message: {}'.format(power))
   client.publish(power_topic, json.dumps(power), retain=True)
 except OSError as e:
   restart_and_reconnect()

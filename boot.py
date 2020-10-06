@@ -18,15 +18,11 @@ file = open("config.json", "r")
 config = json.load(file) 
 file.close()
 
-print(config)
-
 client_id = ubinascii.hexlify(machine.unique_id())
 power_topic = b'toaster/power'
 toasting_topic = b'toaster/toasting'
 
-last_message = 0
-message_interval = 1
-counter = 0
+message_interval = 2
 
 toasting_pin = machine.Pin(4, machine.Pin.IN, machine.Pin.PULL_UP)
 
@@ -42,5 +38,5 @@ station.connect(config["ssid"], config["password"])
 while station.isconnected() == False:
   pass
 
-print('Connection successful')
+print('Connecting to {}, successful'.format(config["ssid"]))
 print(station.ifconfig())
