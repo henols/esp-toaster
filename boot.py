@@ -25,7 +25,7 @@ power_topic = b'toaster/power'
 toasting_topic = b'toaster/toasting'
 
 last_message = 0
-message_interval = 5
+message_interval = 1
 counter = 0
 
 toasting_pin = machine.Pin(4, machine.Pin.IN, machine.Pin.PULL_UP)
