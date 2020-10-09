@@ -1,5 +1,6 @@
 import machine
 
+
 class Switch():
     """Switch Class
 
@@ -7,6 +8,7 @@ class Switch():
     software. To use switch, check the "new_value_available" member and the
     "value" member from the application.
     """
+
     def __init__(self, pin, checks=3, check_period=100):
         self.pin = pin
         self.pin.irq(handler=self._switch_change,
@@ -20,7 +22,6 @@ class Switch():
         self.checks = checks
         self.check_period = check_period
         self.cb = None
-
 
     def _switch_change(self, pin):
         self.value = pin.value()
@@ -49,7 +50,8 @@ class Switch():
                 if self.prev_value != self.value:
                     self.new_value_available = True
                     self.prev_value = self.value
-                    self.cb(self.value)
+                    if self.cb != None :
+                        self.cb(self.value)
 
                 # Re-enable the Switch IRQ to get the next change
                 self.pin.irq(handler=self._switch_change,
