@@ -3,7 +3,8 @@ import ntptime
 from machine import RTC
 
 expected_toasting_time = 120
-
+toasting_times_file = 'toasting_times.json'
+toasting_times = []
 
 def connect_and_subscribe():
   global client_id, config, topic_sub
@@ -34,6 +35,14 @@ def post_toasting_message(state):
   toast['progress'] = duration / expected_toasting_time * 100
   print('Toaster message: {}'.format(toast))
   client.publish(toasting_topic, json.dumps(toast))
+  
+  # Only update the calculated toasting time if we are not toasting and
+  # if the duration is 10% of the expected time, we don't want a failure 
+  # to push down the tray or a change of mind manipulate the expected toasting
+  # time. 
+  if state == False and duration > expected_toasting_time / 10:
+      expected_toasting_time = calculate_expected_toasting_time(duration)
+      toasting_start = 0;
 
 def pin_cb(value):
 #   print('Pin state %s' % value)
@@ -45,7 +54,34 @@ def is_toasting():
     global toasting_switch_cur_value
     return toasting_switch_cur_value == False
 
+def calculate_expected_toasting_time(duration):
+    global toasting_times
+    toasting_times.append(duration)
+    samples = len(toasting_times)
+    if samples > 10:
+        toasting_times.remove(0)
+        samples = 10
+      
+    # Save toasting times
+    f = open(toasting_times_file, "w")
+    f.write(json.dumps(toasting_times)) 
+    f.close()
+    
+    total = 0  
+    for value in toasting_times:
+        total += value
+        
+    print('Calculated toasting time: {}, samples: {}, last duration {}'.format(total/samples, samples, duration))
 
+    return total / samples
+    
+try:
+    f = open(toasting_times_file, "r")
+    toasting_times = json.load(f) 
+    f.close()
+except OSError:  # open failed
+    toasting_times = [90]
+    
 rtc = RTC()
 
 # synchronize with ntp
