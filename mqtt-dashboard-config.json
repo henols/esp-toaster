@@ -31,7 +31,7 @@
 			"topic": "{{ power_topic }}",
 			"topic_pub": "",
 			"uid": 18,
-			"value": "on"
+			"value": ""
 		},
 		{
 			"broker_id": 1,
@@ -60,7 +60,7 @@
 			"topic": "{{ toasting_topic }}",
 			"topic_pub": "",
 			"uid": 21,
-			"value": "8.33333"
+			"value": ""
 		},
 		{
 			"broker_id": 1,
@@ -92,7 +92,7 @@
 			"topic": "{{ toasting_topic }}",
 			"topic_pub": "",
 			"uid": 19,
-			"value": "ejected"
+			"value": ""
 		},
 		{
 			"broker_id": 1,
@@ -119,7 +119,7 @@
 			"topic": "{{ toasting_topic }}",
 			"topic_pub": "",
 			"uid": 20,
-			"value": "00:10"
+			"value": ""
 		}
 	],
 	"groups": [

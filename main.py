@@ -21,7 +21,7 @@ def set_up_ui():
     result = mTmpl.execute(pyGlobalVars=[{'power_topic', str(power_topic, 'utf8')},
                                          {'toasting_topic', str(toasting_topic, 'utf8')}])
 #     print(tmplResult)
-    client.publish(mqtt_dash_ui_topic , result, retain=True)
+    client.publish(mqtt_dash_ui_topic, result)
     gc.collect()
 
 

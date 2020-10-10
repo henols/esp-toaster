@@ -1,4 +1,5 @@
 import time
+import webrepl
 from umqttsimple import MQTTClient
 import ubinascii
 import machine
@@ -41,3 +42,5 @@ while station.isconnected() == False:
 
 print('Connecting to {}, successful'.format(config["ssid"]))
 print(station.ifconfig())
+
+webrepl.start()
