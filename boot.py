@@ -22,11 +22,11 @@ file.close()
 client_id = ubinascii.hexlify(machine.unique_id())
 power_topic = bytes('toaster/{}/power'.format(str(client_id,'utf8')), 'utf8')
 toasting_topic = bytes('toaster/{}/toasting'.format(str(client_id,'utf8')), 'utf8')
-mqtt_dash_ui_topic = b'toaster/mqtt-dash-ui'
+mqtt_dash_ui_topic = b'toaster/ui'
 
 message_interval = 2
 
-toasting_pin = machine.Pin(4, machine.Pin.IN, machine.Pin.PULL_UP)
+toasting_pin = machine.Pin(5, machine.Pin.IN, machine.Pin.PULL_UP)
 
 toasting_switch = Switch(toasting_pin)
 last_toasting_state = False;

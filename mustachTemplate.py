@@ -6,20 +6,11 @@ Copyright © 2018 Jean-Christophe Bos & HC² (www.hc2.fr)
 import re
 
 class MustachTemplate :
-
-    # ============================================================================
-    # ===( Constants )============================================================
-    # ============================================================================
-
     TOKEN_OPEN                = '{{'
     TOKEN_CLOSE                = '}}'
     TOKEN_OPEN_LEN            = len(TOKEN_OPEN)
     TOKEN_CLOSE_LEN            = len(TOKEN_CLOSE)
     
-    # ============================================================================
-    # ===( Constructor )==========================================================
-    # ============================================================================
-
     def __init__(self, code) :
         self._code           = code
         self._pos            = 0
@@ -29,18 +20,12 @@ class MustachTemplate :
         self._pyLocalVars    = { }
         self._rendered        = ''
 
-    # ============================================================================
-    # ===( Functions )============================================================
-    # ============================================================================
-
     def Validate(self, pyGlobalVars=None, pyLocalVars=None) :
         try :
             self._parseCode(pyGlobalVars, pyLocalVars, execute=False)
             return None
         except Exception as ex :
             return str(ex)
-
-    # ----------------------------------------------------------------------------
 
     def execute(self, pyGlobalVars=None, pyLocalVars=None) :
         try :
@@ -49,10 +34,6 @@ class MustachTemplate :
         except Exception as ex :
             raise Exception(str(ex))
 
-    # ============================================================================
-    # ===( Utils  )===============================================================
-    # ============================================================================
-    
     def _parseCode(self, pyGlobalVars, pyLocalVars, execute) :
         if pyGlobalVars:
             self._pyGlobalVars.update(pyGlobalVars) 
@@ -63,8 +44,6 @@ class MustachTemplate :
         if newTokenToProcess is not None :
             raise Exception( '"%s" instruction is not valid here (line %s)'
                              % (newTokenToProcess, self._line) )
-
-    # ----------------------------------------------------------------------------
 
     def _parseBloc(self, execute) :
         while self._pos <= self._endPos :
@@ -95,8 +74,6 @@ class MustachTemplate :
             self._pos += 1
         return None
 
-    # ----------------------------------------------------------------------------
-
     def _processToken(self, tokenContent, execute) :
         tokenContent = tokenContent.strip()
         if execute :
@@ -107,5 +84,3 @@ class MustachTemplate :
                 self._rendered += s
             except Exception as ex :
                 raise Exception('%s (line %s)' % (str(ex), self._line))
-
-    # ----------------------------------------------------------------------------

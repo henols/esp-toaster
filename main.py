@@ -14,9 +14,12 @@ def set_up_ui():
     global mqtt_dash_ui_topic 
     
     filepath = 'mqtt-dashboard-config.json'
-    with open(filepath, 'r') as file :
-        code = file.read()
-    file.close()
+    try:
+        with open(filepath, 'r') as file :
+            code = file.read()
+        file.close()
+    except OSError:  # open failed
+        return
     mTmpl = MustachTemplate(code)
     result = mTmpl.execute(pyGlobalVars=[{'power_topic', str(power_topic, 'utf8')},
                                          {'toasting_topic', str(toasting_topic, 'utf8')}])
@@ -40,7 +43,7 @@ def restart_and_reconnect():
     print('Failed to connect to MQTT broker. Reconnecting...')
     print('mem_alloc: {}, mem_free: {}'.format(gc.mem_alloc() , gc.mem_free()))
     time.sleep(10)
-    machine.reset()
+    # machine.reset()
 
 def post_toasting_message(state):
     global toasting_topic
