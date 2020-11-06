@@ -1,7 +1,4 @@
 import json
-import ntptime
-from machine import RTC
-from mustachTemplate import MustachTemplate
 
 expected_toasting_time = 120
 toasting_times_file = 'toasting_times.json'
@@ -14,17 +11,29 @@ def set_up_ui():
     global mqtt_dash_ui_topic 
     
     filepath = 'mqtt-dashboard-config.json'
+    print('Publishing ui {}'.format(filepath))
     try:
         with open(filepath, 'r') as file :
-            code = file.read()
+            ui = json.load(file) 
         file.close()
     except OSError:  # open failed
+        print('Ui {} not found'.format(filepath))
         return
-    mTmpl = MustachTemplate(code)
-    result = mTmpl.execute(pyGlobalVars=[{'power_topic', str(power_topic, 'utf8')},
-                                         {'toasting_topic', str(toasting_topic, 'utf8')}])
-#     print(tmplResult)
+    gc.collect()
+    print('Adding topics to ui')
+    
+    topics = {'power_topic': str(power_topic, 'utf8'),
+              'toasting_topic': str(toasting_topic, 'utf8')}
+
+    for tile in ui['tiles']:
+        if tile['topic'] in topics:
+            tile['topic'] = topics[tile['topic']]
+
+    result = json.dumps(ui)
+    print('Publishing ui to topic {}'.format(str(mqtt_dash_ui_topic, 'utf8')))
+
     client.publish(mqtt_dash_ui_topic, result)
+    print('Ui published')
     gc.collect()
 
 
@@ -35,7 +44,6 @@ def connect_and_subscribe():
     power['state'] = 'off'
     client.set_last_will(power_topic, json.dumps(power), retain=True)
     client.connect()
-    #  client.subscribe(topic_sub)
     print('Connected to {} MQTT broker'.format(config["mqtt-server"]))
     return client
 
@@ -43,7 +51,7 @@ def restart_and_reconnect():
     print('Failed to connect to MQTT broker. Reconnecting...')
     print('mem_alloc: {}, mem_free: {}'.format(gc.mem_alloc() , gc.mem_free()))
     time.sleep(10)
-    # machine.reset()
+    machine.reset()
 
 def post_toasting_message(state):
     global toasting_topic
@@ -105,16 +113,6 @@ try:
 except OSError:  # open failed
     toasting_times = [90]
     
-rtc = RTC()
-
-# synchronize with ntp
-# need to be connected to wifi
-try:
-    ntptime.settime()  # set the rtc datetime from the remote server
-except OSError as e:
-    print('Failed to get time, try later or not')
-# print('Time %s' % rtc.datetime())   # get the date and time in UTC
-
 print('Connect and subscribe to MQTT broker.')
 try:
     toasting_switch.set_callback(pin_cb)
@@ -129,6 +127,8 @@ except OSError as e:
     restart_and_reconnect()
 
 toasting_start = 0
+
+print('Toaster is started')
 
 while True:
     try:

@@ -27,7 +27,7 @@
     },
     "tile_type" : 1,
     "timestamp_path" : "$.timestamp",
-    "topic" : "{{ power_topic }}",
+    "topic" : "power_topic",
     "topic_pub" : "",
     "uid" : 18,
     "value" : ""
@@ -55,7 +55,7 @@
       "show_progress_value" : false
     },
     "tile_type" : 4,
-    "topic" : "{{ toasting_topic }}",
+    "topic" : "toasting_topic",
     "topic_pub" : "",
     "uid" : 21,
     "value" : ""
@@ -86,7 +86,7 @@
       "paint_background" : true
     },
     "tile_type" : 1,
-    "topic" : "{{ toasting_topic }}",
+    "topic" : "toasting_topic",
     "topic_pub" : "",
     "uid" : 19,
     "value" : ""
@@ -112,7 +112,7 @@
       "time_type" : 0
     },
     "tile_type" : 5,
-    "topic" : "{{ toasting_topic }}",
+    "topic" : "toasting_topic",
     "topic_pub" : "",
     "uid" : 20,
     "value" : ""
